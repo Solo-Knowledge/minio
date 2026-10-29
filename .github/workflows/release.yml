@@ -11,6 +11,7 @@ on:
         description: 'Release Tag (leave empty for auto-generated timestamp tag)'
         required: false
         default: ''
+        type: string
 
 permissions:
   contents: write
@@ -77,14 +78,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.vars.outputs.release_tag }}"
+          REPO="${{ github.repository }}"
+          printf "# MinIO Community Release %s\n\n### Docker Image\n\`\`\`bash\ndocker pull ghcr.io/%s:latest\ndocker pull ghcr.io/%s:%s\n\`\`\`\n" "$TAG" "$REPO" "$REPO" "$TAG" > release_notes.md
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" \
-              --title "$TAG" \
-              --notes "MinIO Community Release $TAG
-
-### Docker Image
-\`\`\`bash
-docker pull ghcr.io/${{ github.repository }}:latest
-docker pull ghcr.io/${{ github.repository }}:$TAG
-\`\`\`"
+            gh release create "$TAG" --title "$TAG" --notes-file release_notes.md
           fi
